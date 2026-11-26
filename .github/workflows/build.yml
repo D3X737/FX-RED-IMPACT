@@ -1,0 +1,37 @@
+name: Build Android APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm install
+      - run: |
+          mkdir -p www assets
+          cp index.html www/index.html
+          cp icon-only.png assets/icon-only.png
+          npx cap add android
+      - run: |
+          S=android/app/src/main/res/values/strings.xml
+          sed -i 's|<string name="app_name">[^<]*</string>|<string name="app_name">RedFolder FX: Impact Alerts</string>|' $S
+          sed -i 's|<string name="title_activity_main">[^<]*</string>|<string name="title_activity_main">Red Alerts FX</string>|' $S
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's|</manifest>|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-permission android:name="android.permission.USE_EXACT_ALARM"/><uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/></manifest>|' $M
+      - run: npx capacitor-assets generate --android
+        continue-on-error: true
+      - run: npx cap sync android
+      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RedFolderFX-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
