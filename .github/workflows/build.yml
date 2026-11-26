@@ -29,6 +29,27 @@ jobs:
           sed -i 's|</manifest>|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-permission android:name="android.permission.USE_EXACT_ALARM"/><uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/></manifest>|' $M
       - run: npx capacitor-assets generate --android
         continue-on-error: true
+      - name: Red folder icon
+        run: |
+          R=android/app/src/main/res
+          mkdir -p $R/drawable $R/drawable-nodpi $R/mipmap-anydpi-v26
+          cp icon-only.png $R/drawable-nodpi/rf_icon.png
+          cat > $R/drawable/rf_bg.xml <<'X'
+          <?xml version="1.0" encoding="utf-8"?>
+          <color xmlns:android="http://schemas.android.com/apk/res/android" android:color="#E11D1D"/>
+          X
+          cat > $R/drawable/rf_fg.xml <<'X'
+          <?xml version="1.0" encoding="utf-8"?>
+          <inset xmlns:android="http://schemas.android.com/apk/res/android" android:drawable="@drawable/rf_icon" android:inset="16%"/>
+          X
+          cat > $R/mipmap-anydpi-v26/ic_launcher.xml <<'X'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+          <background android:drawable="@drawable/rf_bg"/>
+          <foreground android:drawable="@drawable/rf_fg"/>
+          </adaptive-icon>
+          X
+          cp $R/mipmap-anydpi-v26/ic_launcher.xml $R/mipmap-anydpi-v26/ic_launcher_round.xml
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
