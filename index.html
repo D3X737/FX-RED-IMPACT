@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RedFolder FX: Impact Alerts</title>
+
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f2f2f7;--card:#fff;--tx:#1c1c1e;--tx2:#8e8e93;--line:#e5e5ea;--blue:#007aff;--seg:#e3e3e8;
+--hi:#e11d1d;--med:#f5871f;--low:#f2d300;--gray:#9a9a9f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--card:#1c1c1e;--tx:#fff;--tx2:#98989f;--line:#2c2c2e;--seg:#1c1c1e}}
+:root[data-theme="dark"]{--bg:#000;--card:#1c1c1e;--tx:#fff;--tx2:#98989f;--line:#2c2c2e;--seg:#1c1c1e}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;max-width:520px;margin:0 auto;padding:0 16px 96px}
+h1{font-size:32px;margin:18px 0 2px;letter-spacing:-.5px}
+.sub{color:var(--tx2);font-size:14px;margin-bottom:14px}
+.card{background:var(--card);border-radius:16px;overflow:hidden}
+.next{padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.next .big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.next .lbl{font-size:12px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px}
+.next .ttl{font-size:15px;font-weight:600}
+.dot{width:12px;height:12px;border-radius:3px;flex:none;display:inline-block}
+.hi{background:var(--hi)}.med{background:var(--med)}.low{background:var(--low)}.gray{background:var(--gray)}
+.seg{display:flex;background:var(--seg);border-radius:10px;padding:2px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:none;color:var(--tx);font:600 14px inherit;font-family:inherit;padding:7px 0;border-radius:8px}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:0;background:var(--card);color:var(--tx);padding:7px 14px;border-radius:20px;font:600 14px inherit;font-family:inherit}
+.chip.on{background:var(--blue);color:#fff}
+.row{display:grid;grid-template-columns:62px 40px 14px 1fr auto;gap:8px;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row.past{opacity:.45}
+.t{font-size:13px;color:var(--tx2);font-variant-numeric:tabular-nums}
+.cur{font-weight:700;font-size:13px}
+.name{font-size:15px}
+.act{font-size:13px;font-weight:600;color:var(--tx2)}
+.hd{font-size:13px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin:14px 6px 6px}
+.set{padding:0 16px}
+.sr{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);gap:10px}
+.sr:last-child{border:0}
+.sr small{display:block;color:var(--tx2);font-size:13px}
+select,input[type=time]{background:var(--seg);color:var(--tx);border:0;border-radius:8px;padding:7px 10px;font:16px inherit;font-family:inherit}
+.sw{position:relative;width:51px;height:31px;flex:none}
+.sw input{opacity:0;position:absolute;inset:0;margin:0;z-index:2}
+.sw i{position:absolute;inset:0;background:#c7c7cc;border-radius:16px;transition:.2s}
+.sw i::after{content:"";position:absolute;width:27px;height:27px;left:2px;top:2px;background:#fff;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:.2s}
+.sw input:checked+i{background:#34c759}
+.sw input:checked+i::after{transform:translateX(20px)}
+.btn{width:100%;border:0;background:var(--card);color:var(--blue);font:600 16px inherit;font-family:inherit;padding:14px;border-radius:14px;margin-top:10px}
+.tab{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--line);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
+.tab button{flex:1;border:0;background:none;color:var(--tx2);font:600 11px inherit;font-family:inherit}
+.tab button.on{color:var(--blue)}
+.tab b{display:block;font-size:22px;margin-bottom:1px}
+.toast{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:12px;max-width:496px;margin:0 auto;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:18px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.25);transform:translateY(-160%);transition:transform .35s;z-index:20}
+.toast.show{transform:none}
+.toast .a{font-size:12px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px}
+.toast .b{font-weight:700;margin:2px 0}
+.toast .c{font-size:14px;color:var(--tx2)}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--tx2);margin:2px 6px 12px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px}
+.empty{padding:28px;text-align:center;color:var(--tx2)}
+</style>
+</head>
+<body>
+<div class="toast" id="toast" role="status"><div class="a" id="ta"></div><div class="b" id="tb"></div><div class="c" id="tc"></div></div>
+
+<div id="v-cal">
+  <div class="sub" style="margin:14px 0 -12px;font-weight:600">RedFolder FX: Impact Alerts</div>
+  <h1>Calendar</h1>
+  <div class="sub" id="date"></div>
+  <div class="card next"><div><div class="lbl">Next high impact</div><div class="big" id="cd">--:--</div></div><div style="min-width:0"><div class="ttl" id="nt">Nothing left today</div><div class="lbl" id="nc"></div></div></div>
+  <div class="seg" id="day"><button data-d="0" class="on">Today</button><button data-d="1">Tomorrow</button></div>
+  <div class="seg" id="imp"><button data-i="3" class="on">High</button><button data-i="2">Medium +</button><button data-i="0">All</button></div>
+  <div class="chips" id="chips"></div>
+  <div class="legend"><span><i class="dot hi"></i>High</span><span><i class="dot med"></i>Medium</span><span><i class="dot low"></i>Low</span><span><i class="dot gray"></i>Holiday</span></div>
+  <div class="card" id="list"></div>
+</div>
+
+<div id="v-set" hidden>
+  <h1>Alerts</h1>
+  <div class="sub">Stay ahead of the news that moves your trades.</div>
+  <div class="hd">Daily summary</div>
+  <div class="card set">
+    <div class="sr"><div>Send every day<small>High-impact events only</small></div><label class="sw"><input type="checkbox" id="dOn" checked><i></i></label></div>
+    <div class="sr"><div>Time</div><input type="time" id="dTime" value="19:00"></div>
+    <div class="sr"><div>Summary covers<small>Low and medium news: “check the app”</small></div><select id="dFor"><option value="tomorrow">Tomorrow</option><option value="today">Today</option></select></div>
+  </div>
+  <div class="hd">Before the news</div>
+  <div class="card set">
+    <div class="sr"><div>Heads-up alert<small>High-impact events only</small></div><label class="sw"><input type="checkbox" id="lOn" checked><i></i></label></div>
+    <div class="sr"><div>Alert me</div><select id="lead"><option value="15">15 min before</option><option value="30">30 min before</option></select></div>
+  </div>
+  <div class="hd">My currencies</div>
+  <div class="card set"><div class="sr"><div>Only alert for<small id="curTxt">All currencies</small></div><select id="curSel"></select></div></div>
+  <button class="btn" id="pv1">Send me a test summary</button>
+  <button class="btn" id="pv2">Send me a test heads-up</button>
+  <button class="btn" id="pv3">Allow phone notifications</button>
+  <div class="sub" style="margin:14px 6px">Alerts are scheduled on your phone, so they arrive even when the app is closed. Open the app about once a week to refresh the calendar. For on-time alerts, set this app’s battery option to Unrestricted.</div>
+</div>
+
+<div class="tab"><button class="on" data-v="cal"><b>🗓</b>Calendar</button><button data-v="set"><b>🔔</b>Alerts</button></div>
+
+<script>
+var EV=[],DAY=0;
+function view(){return Promise.resolve(ALL).then(function(j){
+  var d=new Date();d.setDate(d.getDate()+DAY);var td=d.toDateString(),M={High:3,Medium:2,Low:1,Holiday:0};
+  EV=j.filter(function(e){return new Date(e.date).toDateString()===td}).map(function(e){var x=new Date(e.date);
+    return{t:pad(x.getHours())+":"+pad(x.getMinutes()),m:x.getHours()*60+x.getMinutes(),c:e.country,n:e.title,i:M[e.impact]||0,a:e.forecast?"Fcst "+e.forecast:""}}).sort(function(a,b){return a.m-b.m});
+  render()}).catch(function(){$("list").innerHTML='<div class="empty">Couldn’t load the calendar. Check your connection.</div>'})}
+var ALL=[],FEED="https://nfs.faireconomy.media/ff_calendar_thisweek.json";
+function load(){view()}
+function pull(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.json()})}
+function refresh(){return Promise.all([pull(FEED),pull(FEED.replace("thisweek","nextweek")).catch(function(){return[]})]).then(function(a){
+  ALL=a[0].concat(a[1]);try{localStorage.setItem("nrEv",JSON.stringify({t:Date.now(),e:ALL}))}catch(e){}view();return schedule()}).catch(function(){})}
+var CLS={0:"gray",3:"hi",2:"med",1:"low"};
+var _={3:"hi",2:"med",1:"low"};
+var S={imp:3,cur:"ALL",dOn:true,dTime:"19:00",dFor:"tomorrow",lOn:true,lead:15};
+try{var sv=JSON.parse(localStorage.getItem("nr")||"null");if(sv)for(var k in sv)S[k]=sv[k]}catch(e){}
+function save(){try{localStorage.setItem("nr",JSON.stringify(S))}catch(e){}if(typeof pushPrefs==="function")pushPrefs()}
+var $=function(i){return document.getElementById(i)};
+var CURS=["ALL","USD","EUR","GBP","JPY","AUD","NZD","CAD","CHF"];
+function nowMin(){var d=new Date();return d.getHours()*60+d.getMinutes()+d.getSeconds()/60}
+function pad(n){return(n<10?"0":"")+n}
+function render(){
+  $("chips").innerHTML=CURS.map(function(c){return'<button class="chip'+(S.cur===c?" on":"")+'" data-c="'+c+'">'+(c==="ALL"?"All":c)+'</button>'}).join("");
+  var n=nowMin();
+  var rows=EV.filter(function(e){return e.i>=S.imp&&(S.cur==="ALL"||e.c===S.cur)});
+  $("list").innerHTML=rows.length?rows.map(function(e){return'<div class="row'+(e.m<n?" past":"")+'"><span class="t">'+e.t+'</span><span class="cur">'+e.c+'</span><i class="dot '+CLS[e.i]+'"></i><span class="name">'+e.n+'</span><span class="act">'+e.a+'</span></div>'}).join(""):'<div class="empty">No events match your filters.</div>';
+  document.querySelectorAll("#imp button").forEach(function(b){b.classList.toggle("on",+b.dataset.i===S.imp)});
+  tick()
+}
+function tick(){
+  var n=nowMin(),nx=EV.filter(function(e){return e.i===3&&e.m>n&&(S.cur==="ALL"||e.c===S.cur)})[0];
+  if(nx){var s=Math.max(0,Math.round((nx.m-n)*60));var h=Math.floor(s/3600),m=Math.floor(s%3600/60),sc=s%60;
+    $("cd").textContent=(h?h+":":"")+pad(m)+":"+pad(sc);$("nt").textContent=nx.n;$("nc").textContent=nx.c+" · "+nx.t}
+  else{$("cd").textContent="--:--";$("nt").textContent="Nothing left today";$("nc").textContent=""}
+}
+function toast(a,b,c){$("ta").textContent=a;$("tb").textContent=b;$("tc").textContent=c;$("toast").classList.add("show");
+  clearTimeout(toast.t);toast.t=setTimeout(function(){$("toast").classList.remove("show")},7000);
+  try{if(window.Notification&&Notification.permission==="granted")new Notification(b,{body:c})}catch(e){}}
+function summary(){
+  var hi=EV.filter(function(e){return e.i===3&&(S.cur==="ALL"||e.c===S.cur)});
+  var rest=EV.filter(function(e){return e.i<3}).length;
+  var names=hi.map(function(e){return e.t+" "+e.c+" "+e.n}).slice(0,3).join(" · ");
+  toast("News Radar · "+(S.dFor==="tomorrow"?"Tomorrow":"Today"),hi.length+" high-impact events",names+(hi.length>3?" +"+(hi.length-3)+" more":"")+". "+rest+" smaller events: check the app.")
+}
+function heads(e){toast("Heads-up · in "+S.lead+" min",e.c+" "+e.n,"High impact at "+e.t+". Consider closing or protecting open trades.")}
+setInterval(tick,1000);setInterval(load,600000);
+// UI wiring
+$("date").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+$("imp").onclick=function(e){if(e.target.dataset.i){S.imp=+e.target.dataset.i;save();render()}};
+$("chips").onclick=function(e){if(e.target.dataset.c){S.cur=e.target.dataset.c;save();sync();render()}};
+document.querySelector(".tab").onclick=function(e){var b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll(".tab button").forEach(function(x){x.classList.toggle("on",x===b)});
+  $("v-cal").hidden=b.dataset.v!=="cal";$("v-set").hidden=b.dataset.v!=="set";window.scrollTo(0,0)};
+$("curSel").innerHTML=CURS.map(function(c){return"<option value='"+c+"'>"+(c==="ALL"?"All currencies":c)+"</option>"}).join("");
+function sync(){$("dOn").checked=S.dOn;$("dTime").value=S.dTime;$("dFor").value=S.dFor;$("lOn").checked=S.lOn;$("lead").value=S.lead;$("curSel").value=S.cur;$("curTxt").textContent=S.cur==="ALL"?"All currencies":S.cur+" only"}
+[["dOn","dOn","c"],["dTime","dTime"],["dFor","dFor"],["lOn","lOn","c"],["lead","lead","n"],["curSel","cur"]].forEach(function(a){
+  $(a[0]).onchange=function(){S[a[1]]=a[2]==="c"?this.checked:a[2]==="n"?+this.value:this.value;save();sync();render()}});
+var LN=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.LocalNotifications;
+function fm(ts){var d=new Date(ts);return pad(d.getHours())+":"+pad(d.getMinutes())}
+function isHi(e){return e.i==="High"&&(S.cur==="ALL"||e.c===S.cur)}
+function pushPrefs(){clearTimeout(pushPrefs.t);pushPrefs.t=setTimeout(schedule,700)}
+function schedule(){
+  if(!LN)return Promise.resolve();
+  return LN.checkPermissions().then(function(p){if(p.display!=="granted")return;
+   return LN.getPending().then(function(q){return q.notifications.length?LN.cancel({notifications:q.notifications.map(function(n){return{id:n.id}})}):0}).then(function(){
+    var now=Date.now(),list=[],ev=ALL.map(function(e){return{c:e.country,n:e.title,i:e.impact,ts:Date.parse(e.date)}}).filter(function(e){return e.ts}),hi=ev.filter(isHi);
+    if(S.lOn){var seen={};hi.forEach(function(e){var at=e.ts-S.lead*60000;if(at<=now||seen[e.ts])return;seen[e.ts]=1;var g=hi.filter(function(x){return x.ts===e.ts});
+      list.push({id:1000+list.length,title:e.c+" "+e.n+(g.length>1?" +"+(g.length-1)+" more":""),body:"High impact at "+fm(e.ts)+" (in "+S.lead+" min). Consider closing or protecting open trades.",schedule:{at:new Date(at),allowWhileIdle:true}})})}
+    if(S.dOn){var hm=S.dTime.split(":"),w=S.dFor==="tomorrow"?"tomorrow":"today";for(var k=0;k<7;k++){var at=new Date();at.setDate(at.getDate()+k);at.setHours(+hm[0],+hm[1],0,0);if(at.getTime()<=now)continue;
+      var t=new Date(at);t.setDate(t.getDate()+(w==="tomorrow"?1:0));var ds=t.toDateString();
+      var day=ev.filter(function(e){return new Date(e.ts).toDateString()===ds&&e.i!=="Holiday"}),h=day.filter(isHi),rest=day.length-h.length;
+      list.push({id:100+k,title:day.length?h.length+" high-impact event"+(h.length===1?"":"s")+" "+w:"Daily summary",
+        body:day.length?(h.length?h.slice(0,4).map(function(e){return fm(e.ts)+" "+e.c+" "+e.n}).join("\n")+(h.length>4?"\n+"+(h.length-4)+" more":""):"No high-impact news.")+(rest?"\n"+rest+" smaller events: check the app.":""):"Open the app to see the news for "+w+".",
+        schedule:{at:at,allowWhileIdle:true}})}}
+    var rem=new Date();rem.setDate(rem.getDate()+6);rem.setHours(10,0,0,0);
+    list.push({id:99,title:"Time to refresh",body:"Open RedFolder FX so your alerts stay up to date.",schedule:{at:rem,allowWhileIdle:true}});
+    return LN.schedule({notifications:list.slice(0,60)})})})}
+function enableAlerts(){
+  if(!LN)return toast("Install the app first","Alerts work in the installed Android app","");
+  LN.requestPermissions().then(function(p){if(p.display!=="granted")throw new Error("Notification permission was not granted");
+    return LN.checkExactNotificationSetting().then(function(x){if(x.exact_alarm!=="granted")return LN.changeExactNotificationSetting()}).catch(function(){})})
+  .then(refresh).then(schedule).then(function(){toast("Alerts are on","You’re all set","Alerts arrive even when the app is closed.")})
+  .catch(function(e){toast("Couldn’t turn on alerts",String(e.message||e),"")})}
+function test(k){
+  if(!LN)return toast("Install the app first","Tests work in the installed Android app","");
+  LN.schedule({notifications:[{id:98,title:k==="digest"?"2 high-impact events tomorrow":"USD Core PCE (sample)",body:k==="digest"?"14:30 USD Core PCE Price Index m/m\n14:30 USD Prelim GDP q/q\n8 smaller events: check the app.":"High impact at 14:30 (in "+S.lead+" min). Consider closing or protecting open trades.",schedule:{at:new Date(Date.now()+4000),allowWhileIdle:true}}]})
+  .then(function(){toast("Test sent","Lock your phone","It arrives in a few seconds.")})}
+$("pv1").onclick=function(){test("digest")};$("pv2").onclick=function(){test("lead")};$("pv3").onclick=enableAlerts;
+$("day").onclick=function(e){if(e.target.dataset.d!==undefined){DAY=+e.target.dataset.d;document.querySelectorAll("#day button").forEach(function(b){b.classList.toggle("on",b===e.target)});load()}};
+try{var c=JSON.parse(localStorage.getItem("nrEv")||"null");if(c)ALL=c.e}catch(e){}
+sync();render();view();refresh();
+</script>
+</body>
+</html>
